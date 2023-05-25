@@ -20,9 +20,23 @@ logging.info('Starting Airtel rate conversion script.')
 file_name = 'Airtel.xlsx'
 logging.info(f'Reading file: {file_name}')
 if file_name.endswith('.csv'):
-    df = pd.read_csv(file_name, skiprows=14)
+    df = pd.read_csv(file_name)
 elif file_name.endswith('.xlsx'):
-    df = pd.read_excel(file_name, skiprows=14)
+    df = pd.read_excel(file_name)
+
+# Find the first row that contains the expected headers
+expected_headers = ['Complete Code', 'Rates (USD / Min)', 'Valid From', 'Pulse']
+start_row = 0
+for i, row in df.iterrows():
+    if set(expected_headers).issubset(row.values):
+        start_row = i + 1
+        break
+
+# Read the file again, this time starting from the correct row
+if file_name.endswith('.csv'):
+    df = pd.read_csv(file_name, skiprows=start_row)
+elif file_name.endswith('.xlsx'):
+    df = pd.read_excel(file_name, skiprows=start_row)
 
 # Step 2: Rename the 'Complete Code' column to 'Prefix'
 logging.info('Renaming and adjusting columns.')
@@ -47,6 +61,22 @@ df['Description'] = ''
 df['Rate Id'] = ''
 df['Forbidden'] = 0
 df['Discontinued'] = 0
+
+# Step 7: Remove unnecessary columns
+df = df.drop(columns=['Destination', 'Valid From', 'Pulse', 'Rates (USD / Min)', 'Rate Change.1', 'Area Code Change'])
+
+# Step 8: Reorder the columns
+cols = ['Country', 'Description', 'Prefix', 'Effective from', 'Rate Id', 'Forbidden', 'Discontinued', 'Price 1', 'Price N', 'Interval 1', 'Interval N']
+df = df[cols]
+
+# Get the current timestamp
+timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+
+# Step 9: Write the data to a CSV file with a timestamp in its name
+logging.info('Writing to CSV file.')
+df.to_csv(f'tcxc_airtel_price_list_{timestamp}.csv', index=False)
+
+logging.info('Airtel rate conversion script completed.')
 
 # Step 7: Remove unnecessary columns
 df = df.drop(columns=['Destination', 'Valid From', 'Pulse', 'Rates (USD / Min)', 'Rate Change.1', 'Area Code Change'])
