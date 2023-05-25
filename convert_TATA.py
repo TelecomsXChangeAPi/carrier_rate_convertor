@@ -4,6 +4,8 @@ Author: Ameed Jamous
 Company: Telecomsxchange.com
 Copyright (c) 2023 Telecomsxchange.com
 """
+
+
 import pandas as pd
 from datetime import datetime
 import logging
@@ -16,15 +18,21 @@ logging.getLogger('').addHandler(console)
 
 logging.info('Script started.')
 
-df = pd.read_excel('TATA.xlsx', skiprows=21)
+
+
+df = pd.read_excel('Amend_32968_USHAMAURYA.xlsx', skiprows=21)
 logging.info('Excel file read.')
 
 # Step 2: Rename 'City Code(s)' column to 'Prefix' and remove '-'
 df['Prefix'] = df['City Code(s)'].str.replace('-', '')
 
+
 # Step 3: Rename 'Price($)' to 'Price 1' and 'Price N'
-df['Price 1'] = df['Price($)']
-df['Price N'] = df['Price($)']
+df['Price($)'] = pd.to_numeric(df['Price($)'], errors='coerce')  # Convert to numeric values
+df['Price 1'] = df['Price($)'] * 1.05  # Add 5% margin to Price 1
+df['Price N'] = df['Price($)'] * 1.05  # Add 5% margin to Price N
+
+
 
 # Step 4: Convert 'Effective Date' to 'Effective from' in the desired format
 df['Effective Date'] = pd.to_datetime(df['Effective Date'], format='%d-%b-%y')
@@ -77,6 +85,8 @@ df = df.drop(columns=['Destination', 'City Code(s)', 'Price($)', 'Effective Date
 cols = ['Country', 'Description', 'Prefix', 'Effective from', 'Rate Id', 'Forbidden', 'Discontinued', 'Price 1', 'Price N', 'Interval 1', 'Interval N']
 df = df[cols]
 
+# Filter out empty rows
+df = df.dropna(subset=['Prefix', 'Effective from'], how='all')
 
 # Get the current timestamp
 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
